@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Juego AR - Cofre del Tesoro</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.loaders.min.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; }
+      .question-text { color: white; font-size: 1.5em; text-align: center; }
+      #question-panel { position: absolute; top: 20px; width: 100%; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div id="question-panel">
+      <div class="question-text" id="question">¿Cuál es la capital de Francia?</div>
+      <button onclick="answer('A')">A) Madrid</button>
+      <button onclick="answer('B')">B) París</button>
+      <button onclick="answer('C')">C) Roma</button>
+    </div>
+    
+    <a-scene embedded arjs>
+      <!-- Marcador personalizado -->
+      <a-marker id="marcador" type="pattern" url="miimagen.patt">
+        <!-- Cofre 3D -->
+        <a-entity id="cofre" gltf-model="cofre.glb" position="0 0 0" scale="0.5 0.5 0.5" animation-mixer></a-entity>
+      </a-marker>
+      
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      const preguntaElement = document.getElementById('question');
+      const botones = document.querySelectorAll('#question-panel button');
+      const cofre = document.querySelector('#cofre');
+      const marcador = document.querySelector('#marcador');
+
+      let preguntaActual = 0;
+      let respuestasCorrectas = 0;
+      const preguntas = [
+        { pregunta: "¿Cuál es la capital de Francia?", respuestaCorrecta: 'B' },
+        { pregunta: "¿Cuántos continentes hay?", respuestaCorrecta: 'A' },
+        { pregunta: "¿Cuál es el océano más grande?", respuestaCorrecta: 'C' }
+      ];
+      
+      // Respuestas posibles (A, B, C)
+      const respuestas = [
+        ['A) Madrid', 'B) París', 'C) Roma'],
+        ['A) 7', 'B) 6', 'C) 5'],
+        ['A) Atlántico', 'B) Pacífico', 'C) Índico']
+      ];
+
+      // Función que cambia la pregunta y verifica la respuesta
+      function answer(selectedAnswer) {
+        if (selectedAnswer === preguntas[preguntaActual].respuestaCorrecta) {
+          respuestasCorrectas++;
+          if (respuestasCorrectas === 3) {
+            abrirCofre();
+          }
+        }
+        preguntaActual++;
+        if (preguntaActual < preguntas.length) {
+          // Actualizamos la pregunta y las respuestas
+          preguntaElement.textContent = preguntas[preguntaActual].pregunta;
+          botones[0].textContent = respuestas[preguntaActual][0];
+          botones[1].textContent = respuestas[preguntaActual][1];
+          botones[2].textContent = respuestas[preguntaActual][2];
+        } else {
+          preguntaElement.textContent = "¡Juego terminado!";
+        }
+      }
+
+      // Función que abre el cofre al responder bien las 3 preguntas
+      function abrirCofre() {
+        const mixer = cofre.components['animation-mixer'].mixer;
+        if (mixer) {
+          const clip = mixer._actions[0]; // Usamos la primera animación del GLB
+          clip.reset().play();
+        }
+      }
+
+      // Configuración inicial de la primera pregunta
+      preguntaElement.textContent = preguntas[preguntaActual].pregunta;
+      botones[0].textContent = respuestas[preguntaActual][0];
+      botones[1].textContent = respuestas[preguntaActual][1];
+      botones[2].textContent = respuestas[preguntaActual][2];
+
+      // El marcador debe estar detectado para que el juego empiece
+      marcador.addEventListener('markerFound', () => {
+        console.log('Marcador detectado. Comienza el juego.');
+      });
+    </script>
+  </body>
+</html>
