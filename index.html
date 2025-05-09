@@ -8,29 +8,37 @@
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.loaders.min.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
-      .question-text { color: white; font-size: 1.5em; text-align: center; }
-      #question-panel { position: absolute; top: 20px; width: 100%; text-align: center; }
+      #question-panel {
+        position: absolute;
+        top: 20px;
+        width: 100%;
+        text-align: center;
+        display: none; /* Oculto al inicio */
+      }
+      .question-text {
+        color: white;
+        font-size: 1.5em;
+        margin-bottom: 10px;
+      }
     </style>
   </head>
   <body>
     <div id="question-panel">
-      <div class="question-text" id="question">¿Cuál es la capital de Francia?</div>
-      <button onclick="answer('A')">A) Madrid</button>
-      <button onclick="answer('B')">B) París</button>
-      <button onclick="answer('C')">C) Roma</button>
+      <div class="question-text" id="question"></div>
+      <button onclick="answer('A')">A</button>
+      <button onclick="answer('B')">B</button>
+      <button onclick="answer('C')">C</button>
     </div>
     
     <a-scene embedded arjs>
-      <!-- Marcador personalizado -->
       <a-marker id="marcador" type="pattern" url="miimagen.patt">
-        <!-- Cofre 3D -->
         <a-entity id="cofre" gltf-model="cofre.glb" position="0 0 0" scale="0.5 0.5 0.5" animation-mixer></a-entity>
       </a-marker>
-      
       <a-entity camera></a-entity>
     </a-scene>
 
     <script>
+      const panel = document.getElementById('question-panel');
       const preguntaElement = document.getElementById('question');
       const botones = document.querySelectorAll('#question-panel button');
       const cofre = document.querySelector('#cofre');
@@ -41,54 +49,56 @@
       const preguntas = [
         { pregunta: "¿Cuál es la capital de Francia?", respuestaCorrecta: 'B' },
         { pregunta: "¿Cuántos continentes hay?", respuestaCorrecta: 'A' },
-        { pregunta: "¿Cuál es el océano más grande?", respuestaCorrecta: 'C' }
+        { pregunta: "¿Cuál es el océano más grande?", respuestaCorrecta: 'B' }
       ];
-      
-      // Respuestas posibles (A, B, C)
       const respuestas = [
         ['A) Madrid', 'B) París', 'C) Roma'],
         ['A) 7', 'B) 6', 'C) 5'],
         ['A) Atlántico', 'B) Pacífico', 'C) Índico']
       ];
 
-      // Función que cambia la pregunta y verifica la respuesta
+      // Mostrar pregunta actual
+      function cargarPregunta() {
+        preguntaElement.textContent = preguntas[preguntaActual].pregunta;
+        botones[0].textContent = respuestas[preguntaActual][0];
+        botones[1].textContent = respuestas[preguntaActual][1];
+        botones[2].textContent = respuestas[preguntaActual][2];
+      }
+
+      // Lógica al responder
       function answer(selectedAnswer) {
         if (selectedAnswer === preguntas[preguntaActual].respuestaCorrecta) {
           respuestasCorrectas++;
-          if (respuestasCorrectas === 3) {
+          if (respuestasCorrectas === preguntas.length) {
             abrirCofre();
           }
         }
         preguntaActual++;
         if (preguntaActual < preguntas.length) {
-          // Actualizamos la pregunta y las respuestas
-          preguntaElement.textContent = preguntas[preguntaActual].pregunta;
-          botones[0].textContent = respuestas[preguntaActual][0];
-          botones[1].textContent = respuestas[preguntaActual][1];
-          botones[2].textContent = respuestas[preguntaActual][2];
+          cargarPregunta();
         } else {
           preguntaElement.textContent = "¡Juego terminado!";
+          botones.forEach(btn => btn.style.display = "none");
         }
       }
 
-      // Función que abre el cofre al responder bien las 3 preguntas
+      // Animación de abrir el cofre
       function abrirCofre() {
         const mixer = cofre.components['animation-mixer'].mixer;
         if (mixer) {
-          const clip = mixer._actions[0]; // Usamos la primera animación del GLB
+          const clip = mixer._actions[0];
           clip.reset().play();
         }
       }
 
-      // Configuración inicial de la primera pregunta
-      preguntaElement.textContent = preguntas[preguntaActual].pregunta;
-      botones[0].textContent = respuestas[preguntaActual][0];
-      botones[1].textContent = respuestas[preguntaActual][1];
-      botones[2].textContent = respuestas[preguntaActual][2];
-
-      // El marcador debe estar detectado para que el juego empiece
+      // Mostrar panel cuando se detecte el marcador
       marcador.addEventListener('markerFound', () => {
-        console.log('Marcador detectado. Comienza el juego.');
+        panel.style.display = 'block';
+        cargarPregunta();
+      });
+
+      marcador.addEventListener('markerLost', () => {
+        panel.style.display = 'none'; // Oculta si se pierde el marcador
       });
     </script>
   </body>
